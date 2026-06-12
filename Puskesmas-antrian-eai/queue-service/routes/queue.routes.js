@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { Queue } = require("../models");
 const auth = require("../middleware/auth");
+const { publishEvent } = require("../utils/rabbitmq");
 
 /* GET QUEUE STATS (for admin dashboard) */
 router.get("/stats", auth, async (req, res) => {
@@ -59,6 +60,41 @@ router.post("/", auth, async (req, res) => {
       schedule_date,
       queue_number: nextQueue,
     });
+
+    // PUBLISH EVENT QUEUE_CREATED
+    const eventPayload = {
+      eventType: "QUEUE_CREATED",
+      timestamp: new Date().toISOString(),
+      source: "queue-service",
+      payload: queue.toJSON()
+    };
+    await publishEvent("queue.created", eventPayload);
+
+    res.json(queue);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+/* UPDATE STATUS ANTRIAN (Untuk Poin Bonus) */
+router.put("/:id/status", auth, async (req, res) => {
+  try {
+    const { status } = req.body; // 'called', 'done', dsb.
+    const queue = await Queue.findByPk(req.params.id);
+    
+    if (!queue) return res.status(404).json({ message: "Queue not found" });
+    
+    queue.status = status;
+    await queue.save();
+
+    // PUBLISH EVENT QUEUE_STATUS_UPDATED
+    const eventPayload = {
+      eventType: "QUEUE_STATUS_UPDATED",
+      timestamp: new Date().toISOString(),
+      source: "queue-service",
+      payload: queue.toJSON()
+    };
+    await publishEvent("queue.status.updated", eventPayload);
 
     res.json(queue);
   } catch (err) {

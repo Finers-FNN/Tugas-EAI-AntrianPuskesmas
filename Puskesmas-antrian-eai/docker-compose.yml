@@ -25,6 +25,26 @@ services:
       - klinik-network
 
   # ============================================
+  # MESSAGE BROKER
+  # ============================================
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: klinik-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - klinik-network
+
+  # ============================================
   # BACKEND SERVICES
   # ============================================
   auth-service:
@@ -101,8 +121,23 @@ services:
       - DB_PASS=rootpassword
       - DB_HOST=mysql
       - DB_PORT=3306
+      - RABBITMQ_URL=amqp://rabbitmq:5672
     depends_on:
       mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - klinik-network
+
+  transformer-service:
+    build: ./transformer-service
+    container_name: klinik-transformer-service
+    restart: unless-stopped
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    depends_on:
+      rabbitmq:
         condition: service_healthy
     networks:
       - klinik-network
@@ -133,3 +168,4 @@ networks:
 
 volumes:
   mysql_data:
+  rabbitmq_data:
