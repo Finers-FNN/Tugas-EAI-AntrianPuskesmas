@@ -19,7 +19,7 @@ export default function Dashboard() {
       <div className="main-content">
         <div className="dashboard-header">
           <h1>Admin Dashboard</h1>
-          <p>Selamat datang di panel admin klinik.</p>
+          <p>Selamat datang di panel admin Puskesmas EAI.</p>
         </div>
 
         <div className="stats-grid">
