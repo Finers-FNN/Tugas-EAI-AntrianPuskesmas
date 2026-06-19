@@ -8,7 +8,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 🔴 INI WAJIB ADA
 app.use("/auth", require("./routes/auth.routes"));
 
 const PORT = 5001;

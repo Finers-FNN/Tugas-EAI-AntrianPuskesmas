@@ -36,7 +36,7 @@ router.post("/register", async (req, res) => {
       password: hashed,
     });
 
-    // 🔐 AUTO LOGIN
+    // AUTO LOGIN
     const token = jwt.sign(
       { id: patient.id, role: "patient" },
       process.env.JWT_SECRET || "secret123",
